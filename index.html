@@ -1,0 +1,78 @@
+<html>
+<title>Firebase Messaging Demo</title>
+<style>
+    div {
+        margin-bottom: 15px;
+    }
+</style>
+
+<body>
+    <div id="token"></div>
+    <div id="msg"></div>
+    <div id="notis"></div>
+    <div id="err"></div>
+    <script src="https://www.gstatic.com/firebasejs/7.14.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.3/firebase-messaging.js"></script>
+    <script>
+        MsgElem = document.getElementById("msg");
+        TokenElem = document.getElementById("token");
+        NotisElem = document.getElementById("notis");
+        ErrElem = document.getElementById("err");
+        // Initialize Firebase
+        var firebaseConfig = {
+            apiKey: "AIzaSyCLftlZ8sLg3GxF8KZHBF4YBDDeR1kcAbc",
+            authDomain: "web-push-test-414c3.firebaseapp.com",
+            databaseURL: "https://web-push-test-414c3.firebaseio.com",
+            projectId: "web-push-test-414c3",
+            storageBucket: "web-push-test-414c3.appspot.com",
+            messagingSenderId: "707954007599",
+            appId: "1:707954007599:web:2feaa8375c86cf6cd770da"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        const messaging = firebase.messaging();
+        messaging
+            .requestPermission()
+            .then(function () {
+                MsgElem.innerHTML = "Notification permission granted."
+                console.log("Notification permission granted.");
+
+                // get the token in the form of promise
+                return messaging.getToken()
+            })
+            .then(function (token) {
+                TokenElem.innerHTML = "token is : " + token
+            })
+            .catch(function (err) {
+                ErrElem.innerHTML = ErrElem.innerHTML + "; " + err
+                console.log("Unable to get permission to notify.", err);
+            });
+
+        // Callback fired if Instance ID token is updated.
+        messaging.onTokenRefresh(() => {
+            messaging.getToken().then((refreshedToken) => {
+                console.log('Token refreshed.');
+                TokenElem.innerHTML = "token is : " + token
+            }).catch((err) => {
+                console.log('Unable to retrieve refreshed token ', err);
+            });
+        });
+
+        // Handle incoming messages. Called when:
+        // - a message is received while the app has focus
+        // - the user clicks on an app notification created by a service worker
+        //   `messaging.setBackgroundMessageHandler` handler.
+        messaging.onMessage(function (payload) {
+            console.log("Message received. ", payload);
+            NotisElem.innerHTML = NotisElem.innerHTML + JSON.stringify(payload);
+            //kenng - foreground notifications
+            const { title, ...options } = payload.notification;
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, options);
+            });
+        });
+    </script>
+
+</body>
+
+</html>
